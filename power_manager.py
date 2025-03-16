@@ -3,22 +3,32 @@ import subprocess
 
 # Detect the OS\NOS_TYPE = platform.system()
 OS_TYPE = platform.system()
+import subprocess
+
 def set_low_power_mode():
-    """Activates low power mode based on the operating system."""
-    if OS_TYPE == "Windows":
-        subprocess.run(["powercfg", "/change", "monitor-timeout-ac", "5"], shell=True)
-    elif OS_TYPE == "Linux":
-        subprocess.run(["cpufreq-set", "-c", "0", "-g", "powersave"], shell=True)
-    elif OS_TYPE == "Darwin":  # macOS
-        subprocess.run(["pmset", "-a", "reduce", "1"], shell=True)
+    """Forces CPU into low power mode by limiting CPU processing power."""
+    power_scheme = "381b4222-f694-41f0-9685-ff5bb260df2e"  # Balanced Power Scheme
+    print(f"Applying Low Power Mode to scheme: {power_scheme}")
+
+    # Force changes
+    subprocess.run(["powercfg", "-setacvalueindex", power_scheme, "SUB_PROCESSOR", "PROCTHROTTLEMIN", "5"], shell=True)
+    subprocess.run(["powercfg", "-setacvalueindex", power_scheme, "SUB_PROCESSOR", "PROCTHROTTLEMAX", "50"], shell=True)
+    subprocess.run(["powercfg", "-setactive", power_scheme], shell=True)
+
     print("Switched to Low Power Mode")
 
+
+
+
 def set_high_performance_mode():
-    """Activates high performance mode based on the operating system."""
-    if OS_TYPE == "Windows":
-        subprocess.run(["powercfg", "/change", "monitor-timeout-ac", "15"], shell=True)
-    elif OS_TYPE == "Linux":
-        subprocess.run(["cpufreq-set", "-c", "0", "-g", "performance"], shell=True)
-    elif OS_TYPE == "Darwin":  # macOS
-        subprocess.run(["pmset", "-a", "reduce", "0"], shell=True)
+    """Forces CPU into high performance mode by allowing 100% power usage."""
+    power_scheme = "381b4222-f694-41f0-9685-ff5bb260df2e"  # Balanced Power Scheme
+    print(f"Applying High Performance Mode to scheme: {power_scheme}")
+
+    # Force changes
+    subprocess.run(["powercfg", "-setacvalueindex", power_scheme, "SUB_PROCESSOR", "PROCTHROTTLEMIN", "100"], shell=True)
+    subprocess.run(["powercfg", "-setacvalueindex", power_scheme, "SUB_PROCESSOR", "PROCTHROTTLEMAX", "100"], shell=True)
+    subprocess.run(["powercfg", "-setactive", power_scheme], shell=True)
+
     print("Switched to High Performance Mode")
+

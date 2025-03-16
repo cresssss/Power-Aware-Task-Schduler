@@ -5,6 +5,8 @@ import threading
 import time
 import platform
 import subprocess
+import power_manager  # Ensure this is at the top
+
 
 # OS-specific power commands
 OS_TYPE = platform.system()
@@ -14,10 +16,15 @@ class PowerAwareScheduler:
         self.root = root
         self.root.title("Power-Aware Task Scheduler")
         self.root.geometry("400x300")
+        self.current_mode = "Normal"  # Track current power mode
+
         
         # CPU Usage Display
-        self.cpu_label = tk.Label(root, text="Current CPU Usage: --%", font=("Arial", 12))
-        self.cpu_label.pack(pady=10)
+        # self.cpu_label = tk.Label(root, text="Current CPU Usage: --%", font=("Arial", 12))
+        # self.cpu_label.pack(pady=10)
+        self.cpu_usage_label = tk.Label(self.root, text="Current CPU Usage: --%")
+        self.cpu_usage_label.pack()
+
         
         # Low Power Threshold
         self.low_power_label = tk.Label(root, text="Low Power Mode Threshold (%):")
@@ -57,45 +64,62 @@ class PowerAwareScheduler:
 
         
     def stop_scheduler(self):
-        self.running = False
+        """Stops the CPU monitoring and prevents further power state changes."""
+        print("Scheduler Stopped!")  # Debugging
+        self.running = False  # Set flag to stop monitoring
         self.start_button.config(state=tk.NORMAL)
         self.stop_button.config(state=tk.DISABLED)
         self.status_label.config(text="Status: Stopped")
+
+
+
         
     def monitor_cpu(self):
-        """Monitors CPU usage and updates UI every 2 seconds without blocking the event loop."""
+        """Continuously monitors CPU usage and adjusts power mode accordingly."""
         cpu_usage = psutil.cpu_percent(interval=1)
-        print(f"CPU Usage: {cpu_usage}%")  # Debugging
-        
-        # Update the GUI label with the latest CPU usage
-        self.cpu_label.config(text=f"Current CPU Usage: {cpu_usage}%")
-        
+        self.cpu_usage_label.config(text=f"Current CPU Usage: {cpu_usage:.1f}%")
+
         low_threshold = int(self.low_power_entry.get())
         high_threshold = int(self.high_performance_entry.get())
 
-        # Check CPU thresholds and adjust power mode
-        if cpu_usage < low_threshold:
-            print("Activating Low Power Mode")  # Debugging
-            self.set_low_power_mode()
-        elif cpu_usage > high_threshold:
-            print("Activating High Performance Mode")  # Debugging
-            self.set_high_performance_mode()
 
-        # Schedule the function to run again in 2 seconds
+        if cpu_usage < low_threshold and self.current_mode != "Low Power":
+            print("Activating Low Power Mode")
+            power_manager.set_low_power_mode()
+            self.status_label.config(text="Status: Low Power Mode Activated")
+            self.current_mode = "Low Power"
+
+        elif cpu_usage > high_threshold and self.current_mode != "High Performance":
+            print("Activating High Performance Mode")
+            power_manager.set_high_performance_mode()
+            self.status_label.config(text="Status: High Performance Mode Activated")
+            self.current_mode = "High Performance"
+
+        # Schedule next check
         if self.running:
-            self.root.after(2000, self.monitor_cpu)  # Run monitor_cpu() again after 2 seconds
+            self.root.after(3000, self.monitor_cpu)
+
+
+
+
 
 
 
         
-    def set_low_power_mode(self):
-        if OS_TYPE == "Windows":
-            subprocess.run(["powercfg", "/change", "monitor-timeout-ac", "5"])
-        elif OS_TYPE == "Linux":
-            subprocess.run(["cpufreq-set", "-c", "0", "-g", "powersave"])
-        elif OS_TYPE == "Darwin":
-            subprocess.run(["pmset", "-a", "reduce", "1"])
-        self.status_label.config(text="Status: Low Power Mode Activated")
+    import subprocess
+
+def set_low_power_mode():
+    """Forces CPU into low power mode by limiting CPU processing power."""
+    power_scheme = "381b4222-f694-41f0-9685-ff5bb260df2e"  # Balanced Power Scheme
+    print(f"Applying Low Power Mode to scheme: {power_scheme}")
+
+    # Force changes
+    subprocess.run(["powercfg", "-setacvalueindex", power_scheme, "SUB_PROCESSOR", "PROCTHROTTLEMIN", "5"], shell=True)
+    subprocess.run(["powercfg", "-setacvalueindex", power_scheme, "SUB_PROCESSOR", "PROCTHROTTLEMAX", "50"], shell=True)
+    subprocess.run(["powercfg", "-setactive", power_scheme], shell=True)
+
+    print("Switched to Low Power Mode")
+
         
     def set_high_performance_mode(self):
         if OS_TYPE == "Windows":
