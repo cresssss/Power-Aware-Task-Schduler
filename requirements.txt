@@ -1,0 +1,16 @@
+1️⃣ cpu_monitor.py (Handles CPU monitoring)
+Tracks CPU usage in real-time using psutil.
+Determines when to switch between power-saving mode and high-performance mode.
+2️⃣ power_manager.py (Handles OS-specific power adjustments)
+Uses platform-specific commands:
+Windows: powercfg
+Linux: cpufreq-set
+macOS: pmset
+Provides functions to lower power state and restore performance mode.
+3️⃣ main.py (Combines everything, runs the scheduler)
+Calls cpu_monitor.py to track CPU activity.
+Uses power_manager.py to adjust power settings dynamically.
+Runs in a loop to continuously monitor and adjust power states.
+
+##############################################
+pip install psutil
