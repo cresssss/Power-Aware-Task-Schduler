@@ -66,7 +66,7 @@ class PowerAwareScheduler:
         """Monitors CPU usage and updates UI every 2 seconds without blocking the event loop."""
         cpu_usage = psutil.cpu_percent(interval=1)
         print(f"CPU Usage: {cpu_usage}%")  # Debugging
-
+        
         # Update the GUI label with the latest CPU usage
         self.cpu_label.config(text=f"Current CPU Usage: {cpu_usage}%")
         
@@ -75,8 +75,10 @@ class PowerAwareScheduler:
 
         # Check CPU thresholds and adjust power mode
         if cpu_usage < low_threshold:
+            print("Activating Low Power Mode")  # Debugging
             self.set_low_power_mode()
         elif cpu_usage > high_threshold:
+            print("Activating High Performance Mode")  # Debugging
             self.set_high_performance_mode()
 
         # Schedule the function to run again in 2 seconds
