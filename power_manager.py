@@ -2,7 +2,7 @@ import platform
 import subprocess
 
 # Detect the OS\NOS_TYPE = platform.system()
-
+OS_TYPE = platform.system()
 def set_low_power_mode():
     """Activates low power mode based on the operating system."""
     if OS_TYPE == "Windows":

@@ -46,11 +46,15 @@ class PowerAwareScheduler:
         self.running = False
         
     def start_scheduler(self):
+        print("Scheduler Started!")  # Debugging line
         self.running = True
         self.start_button.config(state=tk.DISABLED)
         self.stop_button.config(state=tk.NORMAL)
         self.status_label.config(text="Status: Running")
-        threading.Thread(target=self.monitor_cpu, daemon=True).start()
+
+        # Directly start CPU monitoring
+        self.monitor_cpu()
+
         
     def stop_scheduler(self):
         self.running = False
@@ -59,19 +63,28 @@ class PowerAwareScheduler:
         self.status_label.config(text="Status: Stopped")
         
     def monitor_cpu(self):
+        """Monitors CPU usage and updates UI every 2 seconds without blocking the event loop."""
+        cpu_usage = psutil.cpu_percent(interval=1)
+        print(f"CPU Usage: {cpu_usage}%")  # Debugging
+
+        # Update the GUI label with the latest CPU usage
+        self.cpu_label.config(text=f"Current CPU Usage: {cpu_usage}%")
+        
         low_threshold = int(self.low_power_entry.get())
         high_threshold = int(self.high_performance_entry.get())
-        
-        while self.running:
-            cpu_usage = psutil.cpu_percent(interval=1)
-            self.cpu_label.config(text=f"Current CPU Usage: {cpu_usage}%")
-            
-            if cpu_usage < low_threshold:
-                self.set_low_power_mode()
-            elif cpu_usage > high_threshold:
-                self.set_high_performance_mode()
-            
-            time.sleep(2)
+
+        # Check CPU thresholds and adjust power mode
+        if cpu_usage < low_threshold:
+            self.set_low_power_mode()
+        elif cpu_usage > high_threshold:
+            self.set_high_performance_mode()
+
+        # Schedule the function to run again in 2 seconds
+        if self.running:
+            self.root.after(2000, self.monitor_cpu)  # Run monitor_cpu() again after 2 seconds
+
+
+
         
     def set_low_power_mode(self):
         if OS_TYPE == "Windows":

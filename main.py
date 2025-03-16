@@ -27,7 +27,9 @@ if __name__ == "__main__":
     
     running_flag = threading.Event()
     
-    app.start_button.config(command=lambda: start_scheduler(app, running_flag))
+    #app.start_button.config(command=lambda: start_scheduler(app, running_flag))
+    app.start_button.config(command=lambda: app.start_scheduler())
+
     app.stop_button.config(command=lambda: stop_scheduler(running_flag))
     
     root.mainloop()
